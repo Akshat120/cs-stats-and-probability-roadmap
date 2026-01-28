@@ -3,256 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS Statistics & Probability Roadmap</title>
+    <title>CS Statistics & Probability: Interactive Learning Roadmap</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Application Configuration -->
+    <!-- Chosen Palette: Warm Neutral Foundation (Slate/Stone) with Academic Blue/Indigo Accents and Emerald Success States. -->
+    <!-- Application Structure Plan: 
+         1. Hero Dashboard: Immediate visual feedback on progress (Chart.js) and "Current Rank".
+         2. Navigation Tabs: Categorizes content into actionable pillars (Learn, Read, Master, Build).
+         3. Interactive Content Grid: Card-based layout where users explore resources.
+         4. Link Management: Users can now input their own URLs for resources, which persist in local storage.
+         5. Relationship Highlighting: Hovering over concepts highlights related projects/courses.
+    -->
+    <!-- Visualization & Content Choices: 
+         1. Progress Donut (Chart.js): instantly communicates overall completion status.
+         2. Category Bar (Chart.js): Shows balance of learning (Theory vs. Practice).
+         3. Dynamic Inputs: Replaced static "No Link" placeholders with interactive text fields.
+         4. NO SVG/Mermaid: All visuals are CSS-styled HTML or Canvas-based charts.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            color: #1e293b;
         }
 
-        .checkbox-container input:checked ~ .checkmark {
-            background-color: #3b82f6;
-            border-color: #3b82f6;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            max-height: 400px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .checkbox-container input:checked ~ .label-text {
-            text-decoration: line-through;
-            color: #94a3b8;
-        }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
 
-        .card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        .resource-card {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        background-color 0.3s ease, 
+                        border-color 0.3s ease, 
+                        box-shadow 0.3s ease;
         }
-
-        .card:hover {
-            transform: translateY(-2px);
+        
+        .resource-card:hover {
+            transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .resource-card.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .highlight-related {
+            ring: 2px solid #6366f1;
+            background-color: #eef2ff;
+            transform: scale(1.02);
+        }
+
+        .tab-btn {
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        /* Input Animation */
+        .link-input {
+            transition: all 0.2s ease;
+        }
+        .link-input:focus {
+            width: 100%;
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="min-h-screen flex flex-col">
 
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <header class="mb-10 text-center">
-            <h1 class="text-4xl font-bold text-slate-900 mb-2">CS Statistics & Probability</h1>
-            <p class="text-slate-600 italic">Starting points for computer scientists and programmers.</p>
-            <div class="mt-4 inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-semibold" id="progressCounter">
-                Progress: 0% Complete
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">CS</div>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Stats<span class="text-blue-600">Roadmap</span></h1>
             </div>
-        </header>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex flex-col items-end mr-4">
+                    <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Current Rank</span>
+                    <span id="rank-badge" class="text-sm font-bold text-indigo-600">Novice</span>
+                </div>
+                <button onclick="app.resetProgress()" class="text-xs text-slate-400 hover:text-red-500 transition-colors underline">
+                    Reset Data
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <!-- Section 1: Online Courses -->
-        <section class="mb-8">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center">
-                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">1</span>
-                Top-Tier Online Courses
-            </h2>
-            <div class="grid gap-4">
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <label class="checkbox-container flex items-start cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="course-mit">
-                        <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                        </div>
-                        <div>
-                            <span class="label-text font-bold text-slate-800 block mb-1 text-lg">MIT 6.041: Introduction to Probability</span>
-                            <p class="text-slate-600 text-sm">The "gold standard." Rigorous but focuses heavily on intuition for complex CS problems like networking and AI.</p>
-                        </div>
-                    </label>
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <section class="mb-10 text-center max-w-3xl mx-auto">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">Mastering Probability & Statistics</h2>
+            <p class="text-slate-600 leading-relaxed">
+                Welcome to your interactive learning hub. Track your journey from theory to practical application. Now you can customize your roadmap by adding your own resource links to concepts and projects.
+            </p>
+        </section>
+
+        <section class="mb-12 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 text-center md:text-left">
+                <h3 class="text-lg font-semibold text-slate-800">Your Progress Dashboard</h3>
+                <p class="text-sm text-slate-500">Real-time overview of your learning milestones.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 items-center">
+                <div class="flex flex-col items-center">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider">Overall Completion</h4>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span id="progress-percentage" class="text-3xl font-bold text-slate-800">0%</span>
+                        <p class="text-sm text-slate-500">Total Roadmap Completed</p>
+                    </div>
                 </div>
 
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <label class="checkbox-container flex items-start cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="course-harvard">
-                        <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                        </div>
-                        <div>
-                            <span class="label-text font-bold text-slate-800 block mb-1 text-lg">Harvard Stat 110 (Probability)</span>
-                            <p class="text-slate-600 text-sm">Legendary lectures by Joe Blitzstein using storytelling. Covers stochastic processes vital for ML.</p>
-                        </div>
-                    </label>
-                </div>
-
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <label class="checkbox-container flex items-start cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="course-khan">
-                        <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                        </div>
-                        <div>
-                            <span class="label-text font-bold text-slate-800 block mb-1 text-lg">Khan Academy (Stats & Prob)</span>
-                            <p class="text-slate-600 text-sm">Best for a refresher on basics. Builds the foundation needed before hitting advanced engineering topics.</p>
-                        </div>
-                    </label>
+                <div class="flex flex-col items-center">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider">Focus Areas</h4>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="mt-4 max-w-sm text-center">
+                        <p class="text-sm text-slate-500 italic">
+                            "Balance your learning. Practical projects validate theoretical knowledge."
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Section 2: Books -->
-        <section class="mb-8">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center">
-                <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">2</span>
-                Books for Programmers
-            </h2>
-            <div class="grid md:grid-cols-3 gap-4">
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <label class="checkbox-container flex flex-col h-full cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="book-think">
-                        <div class="flex items-center mb-3">
-                            <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-3 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text font-bold text-slate-800 text-base">"Think Stats"</span>
-                        </div>
-                        <p class="text-slate-500 text-xs mt-auto italic">Uses Python to explain concepts instead of heavy math notation.</p>
-                    </label>
-                </div>
+        <div class="flex flex-wrap border-b border-slate-200 mb-8 sticky top-16 bg-[#f8fafc] z-20 pt-2 pb-2 gap-2 justify-center sm:justify-start">
+            <button class="tab-btn active px-4 py-2 rounded-t-lg font-medium text-sm focus:outline-none" onclick="app.filterContent('all', this)">Full View</button>
+            <button class="tab-btn px-4 py-2 rounded-t-lg font-medium text-sm text-slate-600 focus:outline-none" onclick="app.filterContent('course', this)">Courses</button>
+            <button class="tab-btn px-4 py-2 rounded-t-lg font-medium text-sm text-slate-600 focus:outline-none" onclick="app.filterContent('book', this)">Books</button>
+            <button class="tab-btn px-4 py-2 rounded-t-lg font-medium text-sm text-slate-600 focus:outline-none" onclick="app.filterContent('concept', this)">Concepts</button>
+            <button class="tab-btn px-4 py-2 rounded-t-lg font-medium text-sm text-slate-600 focus:outline-none" onclick="app.filterContent('project', this)">Projects</button>
+        </div>
 
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <label class="checkbox-container flex flex-col h-full cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="book-inference">
-                        <div class="flex items-center mb-3">
-                            <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-3 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text font-bold text-slate-800 text-base">"Statistical Inference"</span>
-                        </div>
-                        <p class="text-slate-500 text-xs mt-auto italic">How stats evolved with the power of modern computation.</p>
-                    </label>
-                </div>
+        <div id="section-intro" class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+            <h3 class="font-bold text-blue-900">Explore the Full Roadmap</h3>
+            <p class="text-sm text-blue-800 mt-1">If an item lacks a resource, paste a URL into the link field to save it to your local dashboard.</p>
+        </div>
 
-                <div class="card bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <label class="checkbox-container flex flex-col h-full cursor-pointer">
-                        <input type="checkbox" class="hidden roadmap-check" data-id="book-mit-companion">
-                        <div class="flex items-center mb-3">
-                            <div class="checkmark w-6 h-6 border-2 border-slate-300 rounded mr-3 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text font-bold text-slate-800 text-base">"Intro to Probability"</span>
-                        </div>
-                        <p class="text-slate-500 text-xs mt-auto italic">Companion to MIT course. Mathematical but engineering-focused.</p>
-                    </label>
-                </div>
-            </div>
-        </section>
+        <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        <!-- Section 3: Core Concepts -->
-        <section class="mb-8">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center">
-                <span class="bg-emerald-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">3</span>
-                Core Concepts to Master
-            </h2>
-            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-6">
-                <ul class="space-y-4">
-                    <li class="flex items-start">
-                        <label class="checkbox-container flex items-start cursor-pointer w-full">
-                            <input type="checkbox" class="hidden roadmap-check" data-id="concept-bayes">
-                            <div class="checkmark w-5 h-5 border-2 border-emerald-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text text-slate-700"><strong>Bayes' Theorem:</strong> The logic behind spam filters and most AI.</span>
-                        </label>
-                    </li>
-                    <li class="flex items-start">
-                        <label class="checkbox-container flex items-start cursor-pointer w-full">
-                            <input type="checkbox" class="hidden roadmap-check" data-id="concept-dist">
-                            <div class="checkmark w-5 h-5 border-2 border-emerald-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text text-slate-700"><strong>Distributions:</strong> Understand Gaussian, Poisson, and Binomial.</span>
-                        </label>
-                    </li>
-                    <li class="flex items-start">
-                        <label class="checkbox-container flex items-start cursor-pointer w-full">
-                            <input type="checkbox" class="hidden roadmap-check" data-id="concept-monte">
-                            <div class="checkmark w-5 h-5 border-2 border-emerald-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text text-slate-700"><strong>Monte Carlo Methods:</strong> Solving problems using computational randomness.</span>
-                        </label>
-                    </li>
-                    <li class="flex items-start">
-                        <label class="checkbox-container flex items-start cursor-pointer w-full">
-                            <input type="checkbox" class="hidden roadmap-check" data-id="concept-desc">
-                            <div class="checkmark w-5 h-5 border-2 border-emerald-300 rounded mr-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all">
-                                <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 20 20"><path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/></svg>
-                            </div>
-                            <span class="label-text text-slate-700"><strong>Descriptive Stats:</strong> Mean, variance, and standard deviation for backend monitoring.</span>
-                        </label>
-                    </li>
-                </ul>
-            </div>
-        </section>
+    </main>
 
-        <!-- Section: Projects -->
-        <section class="mb-12">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Practice</h2>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-amber-50 border-l-4 border-amber-400 p-5 rounded-r-xl">
-                    <h3 class="font-bold text-amber-800 mb-2">Build a Load Balancer</h3>
-                    <p class="text-amber-700 text-sm">Use a Poisson distribution to simulate "random" user requests hitting your backend systems.</p>
-                </div>
-                <div class="bg-purple-50 border-l-4 border-purple-400 p-5 rounded-r-xl">
-                    <h3 class="font-bold text-purple-800 mb-2">Naive Bayes Classifier</h3>
-                    <p class="text-purple-700 text-sm">Categorize questions by difficulty based on success rates from your OWS app database.</p>
-                </div>
-            </div>
-        </section>
-
-        <footer class="text-center text-slate-400 text-xs pb-10">
-            Progress is automatically saved to your browser's local storage.
-        </footer>
-    </div>
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-slate-500 text-center sm:text-left">&copy; 2024 Interactive Roadmap. Built for CS Education.</p>
+            <div class="text-xs text-slate-400">Data persists locally via Browser Storage.</div>
+        </div>
+    </footer>
 
     <script>
-        const checkboxes = document.querySelectorAll('.roadmap-check');
-        const progressText = document.getElementById('progressCounter');
+        const app = {
+            data: [
+                { id: 'c1', category: 'course', title: 'MIT 6.041: Intro to Probability', subtitle: 'The "Gold Standard"', description: 'Rigorous course for deep theoretical grounding in probability systems.', link: 'https://ocw.mit.edu/courses/6-041-probabilistic-systems-analysis-and-applied-probability-fall-2010/', relatedIds: ['con1', 'con2', 'p1'], completed: false },
+                { id: 'c2', category: 'course', title: 'Harvard Stat 110', subtitle: 'Strategic Thinking', description: 'Legendary lectures by Joe Blitzstein using storytelling to explain complex distributions.', link: 'https://projects.iq.harvard.edu/stat110', relatedIds: ['con2', 'con3', 'p2'], completed: false },
+                { id: 'c3', category: 'course', title: 'Khan Academy Stats', subtitle: 'The Foundation', description: 'Builds the necessary background before hitting harder engineering topics.', link: 'https://www.khanacademy.org/math/statistics-probability', relatedIds: ['con4'], completed: false },
+                { id: 'b1', category: 'book', title: 'Think Stats', subtitle: 'By Allen B. Downey', description: 'Uses Python code to explain concepts. Learn by writing scripts rather than raw math.', link: '#', relatedIds: ['p1', 'p2', 'con4'], completed: false },
+                { id: 'b2', category: 'book', title: 'Statistical Inference', subtitle: 'Efron and Hastie', description: 'Deep dive into stats in the modern computing age. Bridges classical stats with modern ML.', link: '#', relatedIds: ['con3'], completed: false },
+                { id: 'b3', category: 'book', title: 'Introduction to Probability', subtitle: 'Engineering Focus', description: 'Companion to MIT 6.041. Clear application to engineering systems.', link: '#', relatedIds: ['c1'], completed: false },
+                { id: 'con1', category: 'concept', title: "Bayes' Theorem", subtitle: 'Inference Logic', description: 'Fundamental logic behind spam filters, medical diagnosis, and modern AI.', link: '#', relatedIds: ['p2', 'c1'], completed: false },
+                { id: 'con2', category: 'concept', title: 'Probability Distributions', subtitle: 'Data Shapes', description: 'Understanding Poisson (traffic modeling) and Gaussian (error analysis) distributions.', link: '#', relatedIds: ['p1', 'c2'], completed: false },
+                { id: 'con3', category: 'concept', title: 'Monte Carlo Methods', subtitle: 'Sampling Tool', description: 'Using repeated random sampling to solve hard deterministic problems.', link: '#', relatedIds: ['c2', 'b2'], completed: false },
+                { id: 'con4', category: 'concept', title: 'Descriptive Statistics', subtitle: 'Metrics Mastery', description: 'Essential for backend monitoring. Helps interpret system latency and performance.', link: '#', relatedIds: ['b1', 'c3'], completed: false },
+                { id: 'p1', category: 'project', title: 'Load Balancer Sim', subtitle: 'Backend Practice', description: 'Use a Poisson distribution to simulate random requests hitting servers. Analyze queues.', link: '#', relatedIds: ['con2', 'b1', 'c1'], completed: false },
+                { id: 'p2', category: 'project', title: 'Naive Bayes Classifier', subtitle: 'ML Practice', description: 'Categorize questions by difficulty based on success rates from your database.', link: '#', relatedIds: ['con1', 'b1', 'c2'], completed: false }
+            ],
 
-        // Function to update progress UI
-        function updateProgress() {
-            const total = checkboxes.length;
-            const checked = document.querySelectorAll('.roadmap-check:checked').length;
-            const percentage = Math.round((checked / total) * 100);
-            progressText.innerText = `Progress: ${percentage}% Complete`;
-            
-            if (percentage === 100) {
-                progressText.classList.replace('bg-blue-100', 'bg-green-100');
-                progressText.classList.replace('text-blue-700', 'text-green-700');
-            } else {
-                progressText.classList.add('bg-blue-100', 'text-blue-700');
-                progressText.classList.remove('bg-green-100', 'text-green-700');
-            }
-        }
+            currentFilter: 'all',
+            charts: {},
 
-        // Initialize state from LocalStorage
-        function init() {
-            const savedData = JSON.parse(localStorage.getItem('csStatsRoadmap')) || {};
-            
-            checkboxes.forEach(checkbox => {
-                const id = checkbox.getAttribute('data-id');
-                if (savedData[id]) {
-                    checkbox.checked = true;
+            init: function() {
+                this.loadState();
+                this.renderGrid();
+                this.initCharts();
+                this.updateUI();
+            },
+
+            loadState: function() {
+                const saved = localStorage.getItem('csStatsRoadmapData');
+                if (saved) {
+                    const savedStatus = JSON.parse(saved);
+                    this.data.forEach(item => {
+                        if (savedStatus[item.id]) {
+                            item.completed = savedStatus[item.id].completed;
+                            if(savedStatus[item.id].link && savedStatus[item.id].link !== '#') {
+                                item.link = savedStatus[item.id].link;
+                            }
+                        }
+                    });
                 }
+            },
 
-                // Add Event Listener
-                checkbox.addEventListener('change', () => {
-                    const currentData = JSON.parse(localStorage.getItem('csStatsRoadmap')) || {};
-                    currentData[id] = checkbox.checked;
-                    localStorage.setItem('csStatsRoadmap', JSON.stringify(currentData));
-                    updateProgress();
+            saveState: function() {
+                const statusMap = {};
+                this.data.forEach(item => {
+                    statusMap[item.id] = { completed: item.completed, link: item.link };
                 });
-            });
+                localStorage.setItem('csStatsRoadmapData', JSON.stringify(statusMap));
+                this.updateCharts();
+                this.updateUI();
+            },
 
-            updateProgress();
-        }
+            resetProgress: function() {
+                if(confirm("Reset all progress and custom links?")) {
+                    localStorage.removeItem('csStatsRoadmapData');
+                    location.reload();
+                }
+            },
 
-        // Run on load
-        window.onload = init;
+            toggleComplete: function(id) {
+                const item = this.data.find(d => d.id === id);
+                if (item) {
+                    item.completed = !item.completed;
+                    document.getElementById(`card-${id}`).classList.toggle('completed', item.completed);
+                    this.saveState();
+                }
+            },
+
+            updateLink: function(id, newLink) {
+                const item = this.data.find(d => d.id === id);
+                if (item) {
+                    item.link = newLink.trim() || '#';
+                    this.saveState();
+                    this.renderGrid(); // Re-render to show new button or input
+                }
+            },
+
+            filterContent: function(filter, btnElement) {
+                this.currentFilter = filter;
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+                this.updateSectionIntro(filter);
+                this.renderGrid();
+            },
+
+            updateSectionIntro: function(filter) {
+                const container = document.getElementById('section-intro');
+                const content = {
+                    all: ["Explore the Full Roadmap", "Select an item to view details. Check the box when mastered."],
+                    course: ["Online Courses", "Rigorous academic courses providing the theoretical bedrock."],
+                    book: ["Books for Programmers", "Computational approaches to statistics via code."],
+                    concept: ["Core Concepts", "High-value topics that solve 80% of data problems."],
+                    project: ["Practice Projects", "Build simulators and classifiers to apply your knowledge."]
+                };
+                container.innerHTML = `<h3 class="font-bold text-blue-900">${content[filter][0]}</h3><p class="text-sm text-blue-800 mt-1">${content[filter][1]}</p>`;
+            },
+
+            handleHover: function(id, isEnter) {
+                const item = this.data.find(d => d.id === id);
+                if (item?.relatedIds) {
+                    item.relatedIds.forEach(rid => {
+                        const el = document.getElementById(`card-${rid}`);
+                        if (el) el.classList.toggle('highlight-related', isEnter);
+                    });
+                }
+            },
+
+            renderGrid: function() {
+                const grid = document.getElementById('content-grid');
+                grid.innerHTML = '';
+                const filtered = this.currentFilter === 'all' ? this.data : this.data.filter(d => d.category === this.currentFilter);
+
+                filtered.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = `card-${item.id}`;
+                    card.className = `resource-card bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between ${item.completed ? 'completed' : ''}`;
+                    
+                    const catColors = { course: 'bg-blue-100 text-blue-700', book: 'bg-indigo-100 text-indigo-700', concept: 'bg-purple-100 text-purple-700', project: 'bg-amber-100 text-amber-700' };
+                    const catIcons = { course: '🎓', book: '📚', concept: '🧠', project: '🛠️' };
+
+                    card.innerHTML = `
+                        <div class="mb-4" onmouseenter="app.handleHover('${item.id}', true)" onmouseleave="app.handleHover('${item.id}', false)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${catColors[item.category]}">${item.category}</span>
+                                <div class="text-xl">${catIcons[item.category]}</div>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 leading-tight mb-1">${item.title}</h4>
+                            <p class="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">${item.subtitle}</p>
+                            <p class="text-sm text-slate-600 leading-relaxed line-clamp-3">${item.description}</p>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-slate-100 mt-auto">
+                            <div class="mb-4">
+                                ${item.link === '#' ? `
+                                    <div class="flex flex-col gap-1">
+                                        <label class="text-[10px] text-slate-400 font-bold uppercase">Add Resource URL</label>
+                                        <input type="text" placeholder="https://..." 
+                                            class="link-input text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg w-full"
+                                            onblur="app.updateLink('${item.id}', this.value)"
+                                            onkeydown="if(event.key === 'Enter') app.updateLink('${item.id}', this.value)">
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center justify-between">
+                                        <a href="${item.link}" target="_blank" class="text-sm font-semibold text-blue-600 hover:underline">View Resource →</a>
+                                        <button onclick="app.updateLink('${item.id}', '#')" class="text-slate-300 hover:text-slate-500" title="Edit Link">
+                                            <span class="text-xs">✎</span>
+                                        </button>
+                                    </div>
+                                `}
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-slate-400 font-medium">Progress</span>
+                                <label class="flex items-center cursor-pointer group">
+                                    <input type="checkbox" class="sr-only peer" ${item.completed ? 'checked' : ''} onchange="app.toggleComplete('${item.id}')">
+                                    <div class="w-10 h-5 bg-slate-200 rounded-full peer-checked:bg-emerald-500 transition-colors relative">
+                                        <div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform peer-checked:translate-x-5"></div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            },
+
+            initCharts: function() {
+                const config = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+                this.charts.progress = new Chart(document.getElementById('progressChart'), {
+                    type: 'doughnut', data: { labels: ['Done', 'Left'], datasets: [{ data: [0, 100], backgroundColor: ['#2563eb', '#e2e8f0'], borderWidth: 0 }] },
+                    options: { ...config, cutout: '80%' }
+                });
+                this.charts.category = new Chart(document.getElementById('categoryChart'), {
+                    type: 'bar', data: { labels: ['Courses', 'Books', 'Concepts', 'Projects'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#3b82f6', '#6366f1', '#a855f7', '#f59e0b'] }] },
+                    options: { ...config, scales: { y: { beginAtZero: true, max: 4, ticks: { stepSize: 1 } } } }
+                });
+                this.updateCharts();
+            },
+
+            updateCharts: function() {
+                const done = this.data.filter(i => i.completed).length;
+                this.charts.progress.data.datasets[0].data = [done, this.data.length - done];
+                this.charts.progress.update();
+                const cats = ['course', 'book', 'concept', 'project'];
+                this.charts.category.data.datasets[0].data = cats.map(c => this.data.filter(i => i.category === c && i.completed).length);
+                this.charts.category.update();
+            },
+
+            updateUI: function() {
+                const perc = Math.round((this.data.filter(i => i.completed).length / this.data.length) * 100);
+                document.getElementById('progress-percentage').innerText = `${perc}%`;
+                const ranks = [[100, "Bayesian Master", "text-emerald-600"], [75, "Analyst", "text-amber-600"], [50, "Practitioner", "text-purple-500"], [25, "Student", "text-indigo-500"], [1, "Explorer", "text-blue-500"], [0, "Novice", "text-slate-500"]];
+                const rank = ranks.find(r => perc >= r[0]);
+                const badge = document.getElementById('rank-badge');
+                badge.innerText = rank[1]; badge.className = `text-sm font-bold ${rank[2]}`;
+            }
+        };
+
+        window.onload = () => app.init();
     </script>
 </body>
 </html>
